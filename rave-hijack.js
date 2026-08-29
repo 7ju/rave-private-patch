@@ -334,13 +334,13 @@
 // changelog toast - ENGLISH ONLY
 (function(){
   try{
-    var v="1.1-superfast-en";
+    var v="1.2-test-en";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       setTimeout(function(){
         var d=document.createElement('div');
         d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:#1a1a1a;border:1px solid #333;color:#fff;padding:14px 18px;border-radius:10px;font-size:13px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:sans-serif;';
-        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- All button 5x faster (0.3s)<br>- Removed header info text<br>- Fixed selection (meshInvites)<br>- Hijacked original All button<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
+        d.innerHTML='<b>Rave Update '+v+' [TEST]</b><br><br>- TEST UPDATE: loader auto-update works!<br>- All button still 5x faster<br>- Changelog system verified<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
         d.onclick=function(){d.remove();};
         document.body.appendChild(d);
         setTimeout(function(){ if(d.parentNode) d.remove(); },9000);
