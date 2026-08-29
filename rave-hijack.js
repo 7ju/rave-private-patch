@@ -334,13 +334,13 @@
 // changelog toast - ENGLISH ONLY
 (function(){
   try{
-    var v="1.2-test-en";
+    var v="1.5-loadbar";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       setTimeout(function(){
         var d=document.createElement('div');
         d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:#1a1a1a;border:1px solid #333;color:#fff;padding:14px 18px;border-radius:10px;font-size:13px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:sans-serif;';
-        d.innerHTML='<b>Rave Update '+v+' [TEST]</b><br><br>- TEST UPDATE: loader auto-update works!<br>- All button still 5x faster<br>- Changelog system verified<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
+        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- Native Load bar for updates<br>- All button 5x faster<br>- Instant updates via GitHub<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
         d.onclick=function(){d.remove();};
         document.body.appendChild(d);
         setTimeout(function(){ if(d.parentNode) d.remove(); },9000);
