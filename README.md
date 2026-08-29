@@ -1,14 +1,14 @@
 # Rave Private Patch - 7ju
 
-نسخة Rave الخاصة مع زر All يحدد الكل بضغطة وحدة.
+Private Rave build with All button selecting all with one click.
 
-## التثبيت لأخوياك
-1. حمّل Rave.exe من Releases
-2. شغّله
+## Install for friends
+1. Download Rave.exe from Releases
+2. Run
 
-## التحديثات
-كل تحديث يظهر كـ toast داخل Rave ويتسجل هنا في CHANGELOG.md
+## Updates
+Every update shows a toast in Rave and is logged in CHANGELOG.md
 
-## الملفات
-- `rave-hijack.js` - الكود الأساسي (يحمل تلقائيا)
-- `CHANGELOG.md` - سجل التغييرات
+## Files
+- `rave-hijack.js` - Main patch (auto-loaded)
+- `CHANGELOG.md` - Changelog
