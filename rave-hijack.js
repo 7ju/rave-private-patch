@@ -51,7 +51,7 @@
         if(inv.selectedUsersList) return inv.selectedUsersList;
         if(inv.selectedUsers) return inv.selectedUsers;
       }
-      // old fallback
+      // fallback قديم
       if(st.invites && st.invites.selectedUsersList) return st.invites.selectedUsersList;
       if(st.invites && st.invites.selectedUsers) return st.invites.selectedUsers;
       return [];
@@ -332,83 +332,75 @@
 })();
 
 
-// hide Mic volume in Settings > Sound - ENGLISH ONLY
+// hide Mic volume in Settings > Sound - ENGLISH ONLY - lightweight fix for white screen
 (function(){
+  var debounceTimer=null;
   function hideMicVolume(){
     try{
-      // inject once
-      if(!document.getElementById('hide-mic-volume-style')){
-        var st=document.createElement('style');
-        st.id='hide-mic-volume-style';
-        st.textContent='/* hide Mic volume slider */';
-        document.head.appendChild(st);
-      }
-      // find label "Mic volume" exact
-      var els=document.querySelectorAll('*');
-      var n=Math.min(els.length, 2500);
-      for(var i=0;i<n;i++){
-        var el=els[i];
-        if(!el || !el.textContent) continue;
-        if(el.childElementCount!==0) continue;
-        var t=el.textContent.trim();
-        if(t!=="Mic volume" && t!=="Mic Volume") continue;
-        // hide parent row containing slider
-        var p=el;
-        var hid=false;
-        for(var d=0;d<6 && p; d++){
-          p=p.parentElement;
-          if(!p) break;
-          if(p.querySelector('input[type="range"]') || p.querySelector('[role="slider"]') || p.querySelector('input')){
-            p.style.display='none';
-            hid=true;
-            break;
+      if(debounceTimer) return;
+      debounceTimer=setTimeout(function(){ debounceTimer=null; }, 400);
+      var res=null;
+      try{
+        res=document.evaluate("//*[normalize-space(text())='Mic volume' or normalize-space(text())='Mic Volume']", document, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+      }catch(e){ res=null; }
+      if(res){
+        for(var i=0;i<res.snapshotLength;i++){
+          var el=res.snapshotItem(i);
+          if(!el || el.dataset.micHidden) continue;
+          el.dataset.micHidden="1";
+          var p=el;
+          var hid=false;
+          for(var d=0;d<5 && p; d++){
+            p=p.parentElement;
+            if(!p) break;
+            if(p.querySelector('input[type="range"]') || p.querySelector('input')){
+              p.style.display='none';
+              hid=true;
+              break;
+            }
           }
-        }
-        if(!hid){
-          // fallback: hide 2 levels up
-          var q=el.parentElement;
-          if(q) q=q.parentElement;
-          if(q) q.style.display='none';
-          else el.style.display='none';
-        } else {
-          el.style.display='none';
-        }
-      }
-      // also hide by searching containers that have both text and slider
-      var containers=document.querySelectorAll('div');
-      for(var j=0;j<Math.min(containers.length, 800); j++){
-        var c=containers[j];
-        if(c.style.display==='none') continue;
-        if(c.textContent && c.textContent.includes('Mic volume') && c.querySelector('input[type="range"]')){
-          // ensure it's the row, not whole settings
-          if(c.textContent.length < 300){
-            c.style.display='none';
+          if(!hid){
+            var q=el.closest('div');
+            if(q && q.parentElement) q.parentElement.style.display='none';
+            else el.style.display='none';
           }
         }
       }
     }catch(e){}
   }
-  // run periodically and on DOM changes
-  setInterval(hideMicVolume, 1200);
+  setInterval(function(){ if(document.body.textContent.includes('Mic volume')) hideMicVolume(); }, 2500);
   try{
-    var obs=new MutationObserver(function(){ hideMicVolume(); });
+    var obs=new MutationObserver(function(muts){
+      var need=false;
+      for(var i=0;i<muts.length;i++){
+        var m=muts[i];
+        if(m.addedNodes && m.addedNodes.length){
+          for(var k=0;k<m.addedNodes.length;k++){
+            var nd=m.addedNodes[k];
+            if(nd.textContent && nd.textContent.includes('Mic volume')){ need=true; break; }
+          }
+        }
+        if(need) break;
+      }
+      if(need) hideMicVolume();
+    });
     obs.observe(document.body, {childList:true, subtree:true});
   }catch(e){}
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', hideMicVolume);
-  else setTimeout(hideMicVolume, 800);
-  console.log('[rave] Mic volume hider loaded');
+  else setTimeout(hideMicVolume, 1000);
+  console.log('[rave] Mic volume hider loaded light');
 })();
 
 // changelog toast - ENGLISH ONLY
 (function(){
   try{
-    var v="1.3-mic-hidden";
+    var v="1.4-mic-fix";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       setTimeout(function(){
         var d=document.createElement('div');
         d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:#1a1a1a;border:1px solid #333;color:#fff;padding:14px 18px;border-radius:10px;font-size:13px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:sans-serif;';
-        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- Removed Mic volume from Settings > Sound<br>- All button 5x faster<br>- Loader cachebust enabled<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
+        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- Fixed white screen on Audio tab<br>- Mic volume hidden (lightweight)<br>- All button 5x faster<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
         d.onclick=function(){d.remove();};
         document.body.appendChild(d);
         setTimeout(function(){ if(d.parentNode) d.remove(); },9000);
