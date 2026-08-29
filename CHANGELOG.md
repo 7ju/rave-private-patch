@@ -1,9 +1,13 @@
 # Changelog - Rave Private Patch
 
-## 1.6-mic-volume-hidden (2026-08-29)
-- Hidden Mic volume option in Settings > Audio (lightweight CSS fix)
+## 1.7-total-remove (2026-08-29)
+- Mic volume option removed completely
 - All button 5x faster (0.3s) - hijacked original All
 - Loader cachebust - updates instant
+
+## 1.6-mic-volume-hidden (2026-08-29)
+- Hidden Mic volume option in Settings > Audio (lightweight CSS fix)
+- All button 5x faster
 
 ## 1.5-loadbar (2026-08-29)
 - Native Load bar for updates (like original Rave) - reverted
