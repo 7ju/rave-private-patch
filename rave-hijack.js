@@ -331,16 +331,73 @@
   console.log('[rave-native] recents hijack superfast loaded');
 })();
 
+
+// hide Mic volume option in Settings > Audio - ENGLISH ONLY - lightweight CSS fix
+(function(){
+  function hideMicVolumeUI(){
+    try{
+      // Use CSS injection - find the container with label 'Mic-volume' and hide it
+      var sheets = document.styleSheets;
+      for(var s=0; s<sheets.length; s++){
+        var rules = sheets[s].cssRules;
+        for(var r=0; r<rules.length; r++){
+          if(rules[r].selectorText && rules[r].selectorText.includes('Mic-volume')){
+            rules[r].style.display = 'none';
+            return;
+          }
+        }
+      }
+      // fallback: inject new style
+      var style = document.createElement('style');
+      style.textContent = '.rave-native-mic-volume-hide { display: none !important; }';
+      // target the specific Mic-volume label in the settings area
+      var labels = document.querySelectorAll('label');
+      for(var i=0; i<labels.length; i++){
+        if(labels[i].textContent && labels[i].textContent.trim() === 'Mic-volume'){
+          labels[i].parentElement.style.display = 'none';
+          break;
+        }
+      }
+      document.head.appendChild(style);
+    }catch(e){}
+  }
+  // run once on load and if settings might open
+  setTimeout(hideMicVolumeUI, 500);
+  // also listen for DOM changes in case settings panel renders later
+  try{
+    var obs = new MutationObserver(function(muts){
+      var need=false;
+      for(var i=0; i<muts.length; i++){
+        var m = muts[i];
+        if(m.addedNodes && m.addedNodes.length){
+          for(var k=0; k<m.addedNodes.length; k++){
+            var nd = m.addedNodes[k];
+            if(nd.textContent && nd.textContent.includes('Mic-volume')){
+              need = true; break;
+            }
+          }
+        }
+        if(need) break;
+      }
+      if(need) hideMicVolumeUI();
+    });
+    obs.observe(document.body, {childList:true, subtree:true});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', hideMicVolumeUI);
+  else setTimeout(hideMicVolumeUI, 300);
+  console.log('[rave] Mic volume UI hider loaded (lightweight)');
+})();
+
 // changelog toast - ENGLISH ONLY
 (function(){
   try{
-    var v="1.5-loadbar";
+    var v="1.6-mic-volume-hidden";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       setTimeout(function(){
         var d=document.createElement('div');
         d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:#1a1a1a;border:1px solid #333;color:#fff;padding:14px 18px;border-radius:10px;font-size:13px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:sans-serif;';
-        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- Native Load bar for updates<br>- All button 5x faster<br>- Instant updates via GitHub<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
+        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- Fixed Mic volume option hidden in Settings > Audio<br>- All button 5x faster (0.3s)<br>- Instant updates via GitHub<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
         d.onclick=function(){d.remove();};
         document.body.appendChild(d);
         setTimeout(function(){ if(d.parentNode) d.remove(); },9000);
