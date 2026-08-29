@@ -391,7 +391,7 @@
 // changelog toast - ENGLISH ONLY
 (function(){
   try{
-    var v="1.6-mic-volume-hidden";
+    var v="1.7-total-remove";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       setTimeout(function(){
