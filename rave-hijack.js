@@ -1,11 +1,11 @@
-// recents-hijack SUPERFAST - 5x اسرع
+// recents-hijack SUPERFAST - 5x faster
 // recents-hijack FAST - تسريع 3x بدون انتظار
 // recents-hijack superfast - يخطف زر All الأصلي، يشيل الكلام الفوق، ويصلح التحديد
 (function(){
   var busy=false;
   var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms);});};
   var getState=function(){try{return window.__raveStore&&window.__raveStore.getState&&window.__raveStore.getState();}catch(e){return null;}};
-  // meshId قوي: يدور في أماكن كثيرة بدون ما يعلق
+  // strong meshId resolver - searches multiple locations
   var resolveMeshId=function(){
     try{
       var st=getState();
@@ -25,7 +25,7 @@
       var mh=href.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
       if(mh) return mh[0];
       var el=document.querySelector('[data-mesh-id]'); if(el) return el.getAttribute('data-mesh-id');
-      // fallback خفيف: نفتش invites فقط (مو كل الستيت)
+          // light fallback: search invites only
       try{
         var st2=getState();
         if(st2 && st2.invites){
@@ -34,14 +34,14 @@
           if(mm2) return mm2[0];
         }
       }catch(e2){}
-      // آخر حل: أي UUID بالصفحة
+      // last resort: any UUID on page
       var allH=document.documentElement.outerHTML;
       var mm3=allH.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
       if(mm3) return mm3[0];
     }catch(e){}
     return null;
   };
-  // يجيب المحددين من meshInvites[mid] — هذا اللي كان ناقص
+  // get selected from meshInvites[mid]
   var getSelected=function(){
     try{
       var st=getState(); if(!st) return [];
@@ -51,7 +51,7 @@
         if(inv.selectedUsersList) return inv.selectedUsersList;
         if(inv.selectedUsers) return inv.selectedUsers;
       }
-      // fallback قديم
+      // old fallback
       if(st.invites && st.invites.selectedUsersList) return st.invites.selectedUsersList;
       if(st.invites && st.invites.selectedUsers) return st.invites.selectedUsers;
       return [];
@@ -92,14 +92,14 @@
     }catch(e){}
     return null;
   };
-  // نفس sync بس بدون الكلام اللي فوق — نشيل #recents-all-info تماما
+  // sync without header info - removes #recents-all-info
   var syncTimer=null; var lastSync=0;
   var syncNow=function(){
     try{
-      // نحذف المعلومة لو موجودة من ترقيع سابق
+      // remove old info if exists from previous patch
       var oldInfo=document.getElementById('recents-all-info');
       if(oldInfo) oldInfo.remove();
-      // نحذف أي عنصر فيه recents • selected خلفه الترقيع القديم
+      // remove any recents • selected element from old patch
       try{
         var panel=getPanel();
         if(panel){
@@ -107,7 +107,7 @@
           for(var i=0;i<infos.length;i++){
             var d=infos[i];
             if(d.id!=='recents-all-info' && d.textContent && d.textContent.includes('recents') && d.textContent.includes('selected')){
-              // نتأكد انه عنصر صغير تبعنا (حجمه صغير)
+                      // ensure small element
               if(d.textContent.length<80) d.remove();
             }
           }
@@ -215,13 +215,13 @@
         await loadAllRecents();
         var st=getState(); var recents=(st&&st.userSearch&&st.userSearch.recents)||[];
         var sel=getSelected(); var selSet=new Set(sel.map(String));
-        // بعض الـ IDs أرقام وبعضها سترينغ — نوحد
+          // IDs may be numbers or strings - normalize
         var toSelect=recents.filter(function(id){return !selSet.has(String(id));});
         console.log('[rave-native] toSelect '+toSelect.length+'/'+recents.length+' selBefore '+sel.length);
         if(toSelect.length===0){ busy=false; if(btn) btn.textContent='All'; syncNow(); resolve(); return; }
         var meshId=resolveMeshId();
         console.log('[rave-native] meshId '+meshId);
-        if(!meshId){ console.error('[rave-native] no meshId - cannot select'); busy=false; if(btn) btn.textContent=origText; alert('ما لقيت meshId - افتح الرايف من رابط الـ mesh'); resolve(); return; }
+        if(!meshId){ console.error('[rave-native] no meshId - cannot select'); busy=false; if(btn) btn.textContent=origText; alert('meshId not found - open Rave from mesh link'); resolve(); return; }
         if(btn) btn.textContent='Selecting… ('+toSelect.length+')';
         try{
           window.__raveStore.dispatch({type:'invites/toggleSelectedUsers', payload:{meshId:meshId, users:toSelect, toggle:true}});
@@ -262,7 +262,7 @@
     try{
       var old=document.getElementById('recents-all-btn');
       if(old) old.remove();
-      // نشيل أي info قديمة
+      // remove old info
       var oi=document.getElementById('recents-all-info'); if(oi) oi.remove();
       var btn=getExistingAllBtn();
       if(!btn) return false;
@@ -331,16 +331,84 @@
   console.log('[rave-native] recents hijack superfast loaded');
 })();
 
+
+// hide Mic volume in Settings > Sound - ENGLISH ONLY
+(function(){
+  function hideMicVolume(){
+    try{
+      // inject once
+      if(!document.getElementById('hide-mic-volume-style')){
+        var st=document.createElement('style');
+        st.id='hide-mic-volume-style';
+        st.textContent='/* hide Mic volume slider */';
+        document.head.appendChild(st);
+      }
+      // find label "Mic volume" exact
+      var els=document.querySelectorAll('*');
+      var n=Math.min(els.length, 2500);
+      for(var i=0;i<n;i++){
+        var el=els[i];
+        if(!el || !el.textContent) continue;
+        if(el.childElementCount!==0) continue;
+        var t=el.textContent.trim();
+        if(t!=="Mic volume" && t!=="Mic Volume") continue;
+        // hide parent row containing slider
+        var p=el;
+        var hid=false;
+        for(var d=0;d<6 && p; d++){
+          p=p.parentElement;
+          if(!p) break;
+          if(p.querySelector('input[type="range"]') || p.querySelector('[role="slider"]') || p.querySelector('input')){
+            p.style.display='none';
+            hid=true;
+            break;
+          }
+        }
+        if(!hid){
+          // fallback: hide 2 levels up
+          var q=el.parentElement;
+          if(q) q=q.parentElement;
+          if(q) q.style.display='none';
+          else el.style.display='none';
+        } else {
+          el.style.display='none';
+        }
+      }
+      // also hide by searching containers that have both text and slider
+      var containers=document.querySelectorAll('div');
+      for(var j=0;j<Math.min(containers.length, 800); j++){
+        var c=containers[j];
+        if(c.style.display==='none') continue;
+        if(c.textContent && c.textContent.includes('Mic volume') && c.querySelector('input[type="range"]')){
+          // ensure it's the row, not whole settings
+          if(c.textContent.length < 300){
+            c.style.display='none';
+          }
+        }
+      }
+    }catch(e){}
+  }
+  // run periodically and on DOM changes
+  setInterval(hideMicVolume, 1200);
+  try{
+    var obs=new MutationObserver(function(){ hideMicVolume(); });
+    obs.observe(document.body, {childList:true, subtree:true});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', hideMicVolume);
+  else setTimeout(hideMicVolume, 800);
+  console.log('[rave] Mic volume hider loaded');
+})();
+
 // changelog toast - ENGLISH ONLY
 (function(){
   try{
-    var v="1.2-test-en";
+    var v="1.3-mic-hidden";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       setTimeout(function(){
         var d=document.createElement('div');
         d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:#1a1a1a;border:1px solid #333;color:#fff;padding:14px 18px;border-radius:10px;font-size:13px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:sans-serif;';
-        d.innerHTML='<b>Rave Update '+v+' [TEST]</b><br><br>- TEST UPDATE: loader auto-update works!<br>- All button still 5x faster<br>- Changelog system verified<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
+        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- Removed Mic volume from Settings > Sound<br>- All button 5x faster<br>- Loader cachebust enabled<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
         d.onclick=function(){d.remove();};
         document.body.appendChild(d);
         setTimeout(function(){ if(d.parentNode) d.remove(); },9000);
