@@ -1,3 +1,9 @@
+## 2.18-maximized-blur (2026-08-31) - Maximize + Blur Fix
+- Auto maximize window on startup via window-setMaximize IPC (fullscreen fix)
+- Blur overlay rgba(0,0,0,0.4) + backdrop-filter blur(30px) like native kick
+- Changelog modal stays until OK pressed (no auto-close) - persistent
+- Shows 5.3s after app fully loaded (readyState complete + store ready)
+
 # Changelog
 
 ## 2.7-native-fix (2026-08-31) - Force visible (local patched)
