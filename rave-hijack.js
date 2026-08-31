@@ -441,21 +441,29 @@
 })();
 
 
-// changelog toast - ENGLISH ONLY v1.8
+// changelog modal - NATIVE RAVE KICK STYLE - centered with OK
 (function(){
   try{
-    var v="2.3-stable";
-    if(localStorage.getItem('rave_patch_version')!==v){
-      localStorage.setItem('rave_patch_version',v);
-      setTimeout(function(){
-        var d=document.createElement('div');
-        d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:#1a1a1a;border:1px solid #333;color:#fff;padding:14px 18px;border-radius:10px;font-size:13px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:sans-serif;';
-        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- Chat paste fix: Ctrl+V spam without clicking bar (fixed) (Settings > Audio)<br>- All button 5x faster (0.3s) - hold All to select all<br>- Instant updates via GitHub<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
-        d.onclick=function(){d.remove();};
-        document.body.appendChild(d);
-        setTimeout(function(){ if(d.parentNode) d.remove(); },9000);
-      },1800);
-    }
+    var v="2.4-modal";
+    if(localStorage.getItem('rave_patch_version')===v) return;
+    localStorage.setItem('rave_patch_version',v);
+    setTimeout(function(){
+      // overlay like kick
+      var overlay=document.createElement('div');
+      overlay.id='rave-update-modal';
+      overlay.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;font-family:sans-serif;';
+      var box=document.createElement('div');
+      box.style.cssText='background:#1e1e1e;border:1px solid #333;border-radius:12px;padding:28px 32px;min-width:360px;max-width:420px;color:#fff;text-align:center;box-shadow:0 16px 40px rgba(0,0,0,0.7);';
+      box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:6px;letter-spacing:0.3px">Rave Update</div><div style="font-size:12px;color:#888;margin-bottom:18px">'+v+'</div><div style="font-size:13px;color:#ddd;line-height:1.6;margin-bottom:22px;text-align:left">- Mic volume hidden (Settings > Audio)<br>- All button 5x faster (0.3s)<br>- Chat paste fix - Ctrl+V spam<br>- Native update system</div><button id="rave-modal-ok" style="background:#fff;color:#000;border:none;padding:9px 36px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;min-width:100px">OK</button>';
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      var close=function(){ if(overlay.parentNode) overlay.remove(); };
+      box.querySelector('#rave-modal-ok').onclick=close;
+      overlay.onclick=function(e){ if(e.target===overlay) close(); };
+      // also close on Escape
+      var esc=function(e){ if(e.key==='Escape'){ close(); document.removeEventListener('keydown', esc); } };
+      document.addEventListener('keydown', esc);
+    }, 1200);
   }catch(e){}
 })();
 
