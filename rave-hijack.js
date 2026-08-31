@@ -530,10 +530,112 @@ var findLoaderViaWebpack=function(){
   try{ document.addEventListener('visibilitychange', function(){ if(!document.hidden) doMaximize(); }); }catch(e){}
 })();
 
+
+// BANDWIDTH SHARING UNLOCK - remove enforcement when OFF - GitHub only test
+(function(){
+  function unlockBandwidth(){
+    try{
+      // 1. Hide any modal/overlay that forces enable bandwidth sharing
+      var all = document.querySelectorAll('*');
+      for(var i=0;i<all.length;i++){
+        var el=all[i];
+        var txt=(el.textContent||'');
+        if(txt.length>300) continue;
+        var low=txt.toLowerCase();
+        if(low.indexOf('bandwidth')!==-1){
+          // if this is a popup/modal/overlay, hide its container
+          var cur=el;
+          for(var d=0;d<5;d++){
+            if(!cur) break;
+            var cls=(cur.className||'').toString().toLowerCase();
+            var style=window.getComputedStyle(cur);
+            // modal/popup characteristics
+            if(cls.indexOf('popup')!==-1 || cls.indexOf('modal')!==-1 || cls.indexOf('overlay')!==-1 || cls.indexOf('container')!==-1 || style.position==='fixed' || parseInt(style.zIndex)>9000){
+              // only hide if it contains bandwidth and looks like a gate
+              if(cur.offsetParent!==null){
+                // don't hide the settings row itself, hide blocking overlay
+                if(style.position==='fixed' || cls.indexOf('popup')!==-1 || cls.indexOf('modal')!==-1){
+                  cur.style.display='none';
+                  console.log('[bandwidth] hid gate', cls.slice(0,60));
+                  break;
+                }
+              }
+            }
+            cur=cur.parentElement;
+          }
+        }
+      }
+      // 2. Ensure main content not dimmed/blocked
+      try{
+        var bodies=document.querySelectorAll('[style*="pointer-events: none"], [style*="opacity"]');
+        for(var j=0;j<bodies.length;j++){
+          var b=bodies[j];
+          if(b.style.pointerEvents==='none') b.style.pointerEvents='auto';
+          if(b.style.opacity==='0.3' || b.style.opacity==='0.5') b.style.opacity='1';
+        }
+      }catch(e){}
+      // 3. Keep settings toggle OFF but don't block - hide the nag banner if any
+      // Find bandwidth settings row and ensure it doesn't show warning
+      var bwEls=document.querySelectorAll('*');
+      for(var k=0;k<bwEls.length;k++){
+        var be=bwEls[k];
+        var bt=(be.textContent||'').toLowerCase();
+        if(bt==='bandwidth sharing' || bt.indexOf('bandwidth sharing')!==-1){
+          // ensure its container not showing enforced state
+          // just log, don't hide settings row itself so user can still toggle
+        }
+      }
+    }catch(e){ console.log('[bandwidth] err', e.message); }
+  }
+  // run periodically and on mutations
+  setTimeout(unlockBandwidth, 1500);
+  setTimeout(unlockBandwidth, 3500);
+  setInterval(unlockBandwidth, 2000);
+  try{
+    var obs=new MutationObserver(function(muts){
+      for(var i=0;i<muts.length;i++){
+        var nodes=muts[i].addedNodes;
+        if(nodes && nodes.length){
+          for(var n=0;n<nodes.length;n++){
+            var nd=nodes[n];
+            if(nd.textContent && nd.textContent.toLowerCase().indexOf('bandwidth')!==-1){
+              setTimeout(unlockBandwidth, 100);
+              break;
+            }
+          }
+        }
+      }
+    });
+    obs.observe(document.body, {childList:true, subtree:true});
+  }catch(e){}
+  // also intercept store to auto-allow when bandwidth off
+  try{
+    var origDispatch = null;
+    var hook = setInterval(function(){
+      if(window.__raveStore && window.__raveStore.dispatch && !window.__raveStore.dispatch._bwHooked){
+        origDispatch = window.__raveStore.dispatch;
+        var wrapped = function(action){
+          try{
+            // if action is checking bandwidth gate, allow it
+            if(action && action.payload && typeof action.payload === 'object'){
+              // let it pass
+            }
+          }catch(e){}
+          return origDispatch.apply(this, arguments);
+        };
+        wrapped._bwHooked=true;
+        // don't actually replace to avoid breakage, just observe
+      }
+      if(window.__raveStore) clearInterval(hook);
+    }, 1000);
+  }catch(e){}
+  console.log('[bandwidth] unlock installed');
+})();
+
 // changelog toast - ENGLISH ONLY v1.8
 (function(){
   try{
-    var v="2.18-maximized-blur";
+    var v="2.20-bandwidth-unlock";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       // wait until app fully loaded then show native center popup (same as kick) - stays until OK
