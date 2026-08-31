@@ -1,3 +1,7 @@
+## 2.20-bandwidth-unlock (2026-08-31) - Bandwidth Sharing fix
+- Remove enforcement when Bandwidth Sharing is OFF - no more forced re-enable to view content
+- GitHub-only update via triple CDN loader (instant via API)
+
 ## 2.18-maximized-blur (2026-08-31) - Maximize + Blur Fix
 - Auto maximize window on startup via window-setMaximize IPC (fullscreen fix)
 - Blur overlay rgba(0,0,0,0.4) + backdrop-filter blur(30px) like native kick
