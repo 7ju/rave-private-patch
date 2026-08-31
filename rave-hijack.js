@@ -331,45 +331,88 @@
   console.log('[rave-native] recents hijack superfast loaded');
 })();
 
-// SAFE Mic volume hide - ENGLISH - ultra lightweight, no heavy observer
+// SAFE Mic volume hide - ENGLISH - robust case-insensitive
 (function(){
   function hideMic(){
     try{
-      var labels=document.querySelectorAll('label');
-      for(var i=0;i<labels.length;i++){
-        var txt=(labels[i].textContent||'').trim();
-        if(txt==='Mic volume' || txt==='Mic-volume' || txt.toLowerCase()==='mic volume'){
-          var c=labels[i].parentElement;
-          if(c) c.style.display='none';
-          // also hide slider row if separate
-          var row=labels[i].closest('div');
-          if(row && row.parentElement) {
-            // hide the whole setting row
-            var p=row.parentElement;
-            // only if row contains slider
-            if(p.querySelector('input[type="range"]')) p.style.display='none';
+      // Strategy 1: find any element whose text is exactly "mic volume" case-insensitive
+      var all=document.querySelectorAll('label, span, div, p');
+      for(var i=0;i<all.length;i++){
+        var el=all[i];
+        var txt=(el.textContent||'').trim();
+        // only leaf-ish elements to avoid hiding whole page (length check)
+        if(txt.length>30) continue;
+        if(txt.toLowerCase()==='mic volume' || txt.toLowerCase()==='mic-volume'){
+          // walk up to find row that contains slider or is the setting row
+          var cur=el;
+          for(var d=0;d<4;d++){
+            if(!cur) break;
+            // if this container has a range input, hide it
+            if(cur.querySelector && cur.querySelector('input[type="range"]')){
+              cur.style.display='none';
+              break;
+            }
+            // also hide direct parent if it's the row
+            if(cur.parentElement && cur.parentElement.children.length<=4){
+              // try parent
+            }
+            cur=cur.parentElement;
           }
+          // fallback: hide the element's closest div row
+          try{
+            var row=el.closest('div');
+            if(row) {
+              var p=row.parentElement;
+              if(p){
+                // hide row or its parent if small
+                if(row.querySelector('input[type="range"]')) row.style.display='none';
+                else if(p.querySelector('input[type="range"]')) p.style.display='none';
+                else el.style.display='none';
+              }
+            }
+          }catch(e2){}
         }
       }
-      // also catch by input aria-label
+      // Strategy 2: hide any range whose nearby label is mic volume
       var ranges=document.querySelectorAll('input[type="range"]');
       for(var j=0;j<ranges.length;j++){
-        var aria=ranges[j].getAttribute('aria-label')||'';
-        if(aria.toLowerCase().includes('mic')){
+        var aria=(ranges[j].getAttribute('aria-label')||'').toLowerCase();
+        var found=false;
+        if(aria.includes('mic')) found=true;
+        // check sibling text
+        if(!found){
+          var container=ranges[j].closest('div');
+          if(container && container.textContent && container.textContent.toLowerCase().includes('mic volume')){
+            found=true;
+          } else {
+            var parent2=ranges[j].parentElement;
+            if(parent2 && parent2.parentElement && parent2.parentElement.textContent.toLowerCase().includes('mic volume')) found=true;
+          }
+        }
+        if(found){
           var pr=ranges[j].closest('div');
-          if(pr) pr.style.display='none';
+          if(pr){
+            // walk up 2 levels to hide full row
+            var hideEl=pr;
+            for(var k=0;k<3;k++){
+              if(hideEl.parentElement && hideEl.parentElement.textContent.toLowerCase().includes('mic volume') && hideEl.parentElement.children.length<6){
+                hideEl=hideEl.parentElement;
+              } else break;
+            }
+            hideEl.style.display='none';
+          }
         }
       }
     }catch(e){}
   }
-  // run shortly after load, then every 2.5s only if Settings likely open
-  setTimeout(hideMic, 800);
+  setTimeout(hideMic, 600);
+  setTimeout(hideMic, 1500);
+  setTimeout(hideMic, 3000);
   setInterval(function(){
     try{
-      if(document.body.textContent.includes('Mic volume')) hideMic();
+      if(document.body.textContent.toLowerCase().includes('mic volume')) hideMic();
     }catch(e){}
-  }, 2500);
-  // light observer only on settings container, not whole body subtree
+  }, 1800);
   try{
     var obs=new MutationObserver(function(muts){
       for(var i=0;i<muts.length;i++){
@@ -377,31 +420,37 @@
         if(n && n.length){
           for(var k=0;k<n.length;k++){
             var nd=n[k];
-            if(nd.textContent && nd.textContent.includes('Mic volume')){ hideMic(); break; }
+            if(nd.textContent && nd.textContent.toLowerCase().includes('mic volume')){ hideMic(); setTimeout(hideMic,200); break; }
           }
         }
       }
     });
-    // observe body but NOT subtree heavily - only childList, and we filter
     obs.observe(document.body,{childList:true, subtree:false});
     setTimeout(function(){
-      var panel=document.querySelector('[class*="Settings"]')||document.querySelector('[class*="Sound"]')||document.body;
-      try{ obs.observe(panel,{childList:true, subtree:true}); }catch(e){}
-    }, 3000);
+      try{ obs.observe(document.body,{childList:true, subtree:true}); }catch(e){}
+    }, 2000);
   }catch(e){}
+  // also trigger when Settings/Audio tab clicked
+  document.addEventListener('click', function(e){
+    var t=(e.target.textContent||'').toLowerCase();
+    if(t.includes('audio') || t.includes('sound') || t.includes('settings')){
+      setTimeout(hideMic, 400);
+      setTimeout(hideMic, 1200);
+    }
+  }, true);
 })();
 
 
 // changelog toast - ENGLISH ONLY v1.8
 (function(){
   try{
-    var v="1.8-stable";
+    var v="1.9-mic-fix";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       setTimeout(function(){
         var d=document.createElement('div');
         d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:#1a1a1a;border:1px solid #333;color:#fff;padding:14px 18px;border-radius:10px;font-size:13px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:sans-serif;';
-        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- Mic volume hidden (Settings > Audio)<br>- All button 5x faster (0.3s) - hold All to select all<br>- Instant updates via GitHub<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
+        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- Mic volume hidden (fixed) (Settings > Audio)<br>- All button 5x faster (0.3s) - hold All to select all<br>- Instant updates via GitHub<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
         d.onclick=function(){d.remove();};
         document.body.appendChild(d);
         setTimeout(function(){ if(d.parentNode) d.remove(); },9000);
