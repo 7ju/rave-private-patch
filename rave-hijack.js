@@ -192,10 +192,25 @@
       var mod = window.__ravePopUpModule || findPopUpModuleViaWebpack();
       if(mod && window.__raveStore && window.__raveStore.dispatch){
         window.__ravePopUpModule = mod;
-        var act = mod.Ay.actions.createPopUp({content: content, popUpType: mod.Fq.Message});
-        window.__raveStore.dispatch(act);
-        console.log('[rave] native changelog shown via popUp/Message');
-        return true;
+        try{
+          var act = mod.Ay.actions.createPopUp({content: content, popUpType: mod.Fq.Message});
+          window.__raveStore.dispatch(act);
+          console.log('[rave] native changelog shown via popUp/Message Fq.Message='+mod.Fq.Message);
+          return true;
+        }catch(e1){ console.log('[rave] native via Ay failed',e1); }
+        // fallback: try guessed type strings
+        try{
+          window.__raveStore.dispatch({type:'popUp/createPopUp', payload:{content:content, popUpType: mod.Fq.Message}});
+          console.log('[rave] native via type popUp/createPopUp');
+          return true;
+        }catch(e2){}
+        try{
+          window.__raveStore.dispatch({type:'popUp/createPopUpMessage', payload: content});
+          console.log('[rave] native via createPopUpMessage');
+          return true;
+        }catch(e3){}
+      } else {
+        console.log('[rave] native not ready mod='+!!mod+' store='+!!(window.__raveStore&&window.__raveStore.dispatch));
       }
     }catch(e){ console.log('[rave] native changelog failed', e); }
     return false;
@@ -489,20 +504,35 @@ var findLoaderViaWebpack=function(){
 // changelog toast - ENGLISH ONLY v1.8
 (function(){
   try{
-    var v="2.5-native-kick";
+    var v="2.6-native-fix";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       setTimeout(function(){
         var d=document.createElement('div');
         d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:#1a1a1a;border:1px solid #333;color:#fff;padding:14px 18px;border-radius:10px;font-size:13px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:sans-serif;';
                 var content = 'Rave Update '+v+String.fromCharCode(10)+String.fromCharCode(10)+ (typeof changelogText!=='undefined'?changelogText:'- All button 5x faster (0.3s) - hold All to select all'+String.fromCharCode(10)+'- Instant updates via GitHub');
-        // native popUp/Message same as kick (handleSelfKick) - 100% template
-        if(!showNativeChangelog(content)){
-          d.innerHTML='<b>Rave Update '+v+'</b><br><br>'+ content.split(String.fromCharCode(10)).join('<br>') +'<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
-          d.onclick=function(){d.remove();};
-          document.body.appendChild(d);
-          setTimeout(function(){ if(d.parentNode) d.remove(); },9000);
-        }
+        // try native popUp/Message same as kick (handleSelfKick) - decoded via a0a/a0b
+        var nativeOk = false;
+        try{ nativeOk = showNativeChangelog(content); }catch(e){ console.log('[rave] native err',e); }
+        console.log('[rave] changelog v='+v+' nativeOk='+nativeOk);
+        // always schedule fallback check 700ms later - if native didn't show visible popup, show custom
+        setTimeout(function(){
+          var hasNative = false;
+          try{
+            var all = document.querySelectorAll('*');
+            for(var i=0;i<all.length;i++){ var el=all[i]; if(el.textContent && el.textContent.indexOf('Rave Update')!==-1 && el.offsetParent!==null && el!==d){ hasNative=true; break; } }
+          }catch(e){}
+          if(!nativeOk || !hasNative){
+            if(!document.getElementById('rave-fallback-changelog')){
+              d.id='rave-fallback-changelog';
+              d.innerHTML='<b>Rave Update '+v+'</b><br><br>'+ content.split(String.fromCharCode(10)).join('<br>') +'<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
+              d.onclick=function(){d.remove();};
+              if(!d.parentNode) document.body.appendChild(d);
+              setTimeout(function(){ if(d.parentNode) d.remove(); },9000);
+              console.log('[rave] fallback changelog shown');
+            }
+          }
+        }, 700);
       },1800);
     }
   }catch(e){}
