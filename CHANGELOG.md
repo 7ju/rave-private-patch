@@ -1,17 +1,15 @@
 # Changelog - Rave Private Patch
 
+## 2.4-modal (2026-08-31)
+- NEW: Changelog now centered modal like kick message (OK button)
+- Overlay rgba(0,0,0,0.65) + box #1e1e1e + OK white button
+- Mic volume hidden, All 5x faster, Chat paste fix
+
 ## 2.3-stable (2026-08-31)
-- Stable clean - test dot removed
-- Mic volume hidden (Settings > Audio) - safe
-- All button 5x faster (0.3s) - hijacked original All
-- Chat paste fix - Ctrl+V spam without clicking bar
-- Native loadbar when update available, instant loader
+- Stable clean
 
 ## 2.2-test-pure (2026-08-31)
-- Test pure github (green dot) - verified works
+- Test pure github verified
 
 ## 2.0-chat-paste (2026-08-31)
 - Chat paste fix
-
-## 1.9-mic-fix (2026-08-31)
-- Mic volume hidden robustly
