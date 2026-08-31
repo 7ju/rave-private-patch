@@ -535,36 +535,57 @@ var findLoaderViaWebpack=function(){
 (function(){
   function unlockBandwidth(){
     try{
-      // 1. Hide any modal/overlay that forces enable bandwidth sharing
       var all = document.querySelectorAll('*');
       for(var i=0;i<all.length;i++){
         var el=all[i];
         var txt=(el.textContent||'');
-        if(txt.length>300) continue;
+        if(txt.length>500 || txt.length<8) continue;
         var low=txt.toLowerCase();
         if(low.indexOf('bandwidth')!==-1){
-          // if this is a popup/modal/overlay, hide its container
+          // climb to popup-like container and nuke it
           var cur=el;
-          for(var d=0;d<5;d++){
-            if(!cur) break;
+          for(var d=0;d<7;d++){
+            if(!cur || cur===document.body) break;
             var cls=(cur.className||'').toString().toLowerCase();
-            var style=window.getComputedStyle(cur);
-            // modal/popup characteristics
-            if(cls.indexOf('popup')!==-1 || cls.indexOf('modal')!==-1 || cls.indexOf('overlay')!==-1 || cls.indexOf('container')!==-1 || style.position==='fixed' || parseInt(style.zIndex)>9000){
-              // only hide if it contains bandwidth and looks like a gate
-              if(cur.offsetParent!==null){
-                // don't hide the settings row itself, hide blocking overlay
-                if(style.position==='fixed' || cls.indexOf('popup')!==-1 || cls.indexOf('modal')!==-1){
-                  cur.style.display='none';
-                  console.log('[bandwidth] hid gate', cls.slice(0,60));
-                  break;
-                }
+            var isGate = cls.indexOf('popup')!==-1 || cls.indexOf('modal')!==-1 || cls.indexOf('overlay')!==-1 || cls.indexOf('gate')!==-1 || cls.indexOf('infatica')!==-1 || cur.getAttribute && cur.getAttribute('role')==='dialog';
+            var style=null; try{style=window.getComputedStyle(cur);}catch(e){}
+            if(style && (style.position==='fixed' || parseInt(style.zIndex)>500 || isGate)){
+              if(cur.offsetParent!==null || isGate){
+                cur.style.display='none';
+                cur.style.pointerEvents='none';
+                console.log('[bandwidth] hid gate', cls.slice(0,80));
+                break;
+              }
+            }
+            // also hide any sibling overlay that dims content when bandwidth off
+            if(cur.parentElement){
+              var sibs=cur.parentElement.children;
+              for(var si=0;si<sibs.length;si++){
+                var sb=sibs[si];
+                try{
+                  var sbs=window.getComputedStyle(sb);
+                  if(sbs.position==='fixed' && sbs.backgroundColor && sbs.backgroundColor.indexOf('0, 0, 0')!==-1 && sb!==cur){
+                    sb.style.display='none';
+                  }
+                }catch(e){}
               }
             }
             cur=cur.parentElement;
           }
         }
       }
+      // also kill infatica gate if present
+      try{
+        if(window.infaticaSdk){
+          // prevent it from blocking
+          if(window.infaticaSdk.isEnabled===false) console.log('[bandwidth] infatica disabled');
+        }
+      }catch(e){}
+      // force main content visible
+      try{
+        var grids=document.querySelectorAll('.Mesh__mesh-grid-container__XFaez, .Mesh__mesh-grid-wrapper, [class*="mesh-grid"]');
+        for(var g=0;g<grids.length;g++){ grids[g].style.opacity='1'; grids[g].style.pointerEvents='auto'; grids[g].style.filter='none'; }
+      }catch(e){}
       // 2. Ensure main content not dimmed/blocked
       try{
         var bodies=document.querySelectorAll('[style*="pointer-events: none"], [style*="opacity"]');
@@ -635,7 +656,7 @@ var findLoaderViaWebpack=function(){
 // changelog toast - ENGLISH ONLY v1.8
 (function(){
   try{
-    var v="2.20-bandwidth-unlock";
+    var v="2.21-bandwidth-unlock-v2";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       // wait until app fully loaded then show native center popup (same as kick) - stays until OK
