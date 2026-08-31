@@ -444,18 +444,110 @@
 // changelog toast - ENGLISH ONLY v1.8
 (function(){
   try{
-    var v="1.9-mic-fix";
+    var v="2.0-chat-paste";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       setTimeout(function(){
         var d=document.createElement('div');
         d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:#1a1a1a;border:1px solid #333;color:#fff;padding:14px 18px;border-radius:10px;font-size:13px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:sans-serif;';
-        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- Mic volume hidden (fixed) (Settings > Audio)<br>- All button 5x faster (0.3s) - hold All to select all<br>- Instant updates via GitHub<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
+        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- Chat paste fix: Ctrl+V spam without clicking bar (fixed) (Settings > Audio)<br>- All button 5x faster (0.3s) - hold All to select all<br>- Instant updates via GitHub<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
         d.onclick=function(){d.remove();};
         document.body.appendChild(d);
         setTimeout(function(){ if(d.parentNode) d.remove(); },9000);
       },1800);
     }
   }catch(e){}
+})();
+
+// CHAT PASTE FIX - keep chat bar focused for spam - ENGLISH
+(function(){
+  function getChatInput(){
+    try{
+      var el=document.querySelector('div[contenteditable="true"][role="textbox"]');
+      if(el) return el;
+      var all=document.querySelectorAll('div[contenteditable="true"]');
+      // pick the one inside chat area (closest to bottom)
+      if(all.length){
+        // prefer last visible one
+        for(var i=all.length-1;i>=0;i--){
+          var c=all[i];
+          if(c.offsetParent!==null && c.clientHeight>20) return c;
+        }
+        return all[all.length-1];
+      }
+      el=document.querySelector('textarea[placeholder]');
+      if(el) return el;
+      el=document.querySelector('input[placeholder*="message" i]');
+      if(el) return el;
+    }catch(e){}
+    return null;
+  }
+  function focusChat(){
+    try{
+      var inp=getChatInput();
+      if(!inp) return;
+      inp.focus();
+      // move cursor to end if contenteditable
+      if(inp.isContentEditable){
+        var sel=window.getSelection();
+        if(sel){
+          var range=document.createRange();
+          range.selectNodeContents(inp);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      }
+    }catch(e){}
+  }
+  // after Enter (send), refocus quickly
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Enter' && !e.shiftKey){
+      setTimeout(focusChat, 60);
+      setTimeout(focusChat, 250);
+      setTimeout(focusChat, 600);
+    }
+    // Global Ctrl+V: if focus not in input, redirect paste to chat bar
+    if(e.ctrlKey && e.key.toLowerCase()==='v'){
+      var ae=document.activeElement;
+      var isInput = ae && (ae.tagName==='INPUT' || ae.tagName==='TEXTAREA' || ae.isContentEditable);
+      if(!isInput){
+        var chat=getChatInput();
+        if(chat && chat.offsetParent!==null){
+          e.preventDefault();
+          chat.focus();
+          // try clipboard read and insert
+          try{
+            if(navigator.clipboard && navigator.clipboard.readText){
+              navigator.clipboard.readText().then(function(t){
+                if(t){
+                  if(chat.isContentEditable){
+                    document.execCommand('insertText', false, t);
+                  } else {
+                    var start=chat.selectionStart||chat.value.length;
+                    var end=chat.selectionEnd||start;
+                    chat.value = chat.value.slice(0,start)+t+chat.value.slice(end);
+                    chat.selectionStart=chat.selectionEnd=start+t.length;
+                    chat.dispatchEvent(new Event('input',{bubbles:true}));
+                  }
+                  // keep focused for next paste
+                  setTimeout(focusChat, 30);
+                }
+              }).catch(function(){ setTimeout(focusChat, 30); });
+            } else {
+              setTimeout(focusChat, 30);
+            }
+          }catch(err){ setTimeout(focusChat, 30); }
+        }
+      }
+    }
+  }, true);
+  // also refocus when clicking anywhere in chat except search
+  document.addEventListener('click', function(e){
+    var ae=document.activeElement;
+    if(ae && ae.tagName==='INPUT' && ae.placeholder && ae.placeholder.toLowerCase().includes('search')) return;
+    // don't steal if selecting text in messages
+  }, true);
+  console.log('[rave] chat paste fix loaded');
 })();
 
