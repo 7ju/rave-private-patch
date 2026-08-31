@@ -155,11 +155,12 @@
       return true;
     }catch(e){return false;}
   };
-    var findPopUpModuleViaWebpack=function(){
+    var findPopUpCandidatesViaWebpack=function(){
+    var out=[];
     try{
       var chunk=window.webpackChunkrave_desktop||self.webpackChunkrave_desktop;
       if(chunk && chunk.push){
-        var req=null; try{ chunk.push([['probe-pop-'+Date.now()],{},function(r){req=r;}]); }catch(e){}
+        var req=null; try{ chunk.push([['probe-pop2-'+Date.now()],{},function(r){req=r;}]); }catch(e){}
         if(req){
           var c = req.c || req.cache;
           if(c){
@@ -167,52 +168,58 @@
               try{
                 var mod=c[id]; if(!mod||!mod.exports) continue;
                 var ex=mod.exports;
-                if(ex && typeof ex==='object' && 'Fq' in ex && 'Ay' in ex && ex.Fq && ex.Fq.Message && ex.Ay && ex.Ay.actions && ex.Ay.actions.createPopUp){
-                  return ex;
+                function isPopUpCandidate(o){
+                  return o && typeof o==='object' && 'Fq' in o && 'Ay' in o && o.Fq && o.Ay && o.Ay.actions && o.Ay.actions.createPopUp;
                 }
-                if(ex && ex.default && typeof ex.default==='object' && 'Fq' in ex.default && 'Ay' in ex.default) {
-                  var ed=ex.default;
-                  if(ed.Fq && ed.Fq.Message && ed.Ay && ed.Ay.actions && ed.Ay.actions.createPopUp) return ed;
-                }
+                if(isPopUpCandidate(ex)) out.push(ex);
+                if(ex && ex.default && isPopUpCandidate(ex.default)) out.push(ex.default);
                 for(var k in ex){
                   var v=ex[k];
-                  if(v && typeof v==='object' && 'Fq' in v && 'Ay' in v) {
-                    if(v.Fq && v.Fq.Message && v.Ay && v.Ay.actions && v.Ay.actions.createPopUp) return v;
-                  }
+                  if(v && typeof v==='object' && isPopUpCandidate(v)) out.push(v);
+                  if(v && v.default && isPopUpCandidate(v.default)) out.push(v.default);
                 }
               }catch(e2){}
             }
           }
         }
       }
-    }catch(e){} return null;
+    }catch(e){}
+    return out;
+  };
+  var findPopUpModuleViaWebpack=function(){
+    var cands=findPopUpCandidatesViaWebpack();
+    if(cands.length) return cands[0];
+    return null;
   };
   var showNativeChangelog=function(content){
     try{
-      var mod = window.__ravePopUpModule || findPopUpModuleViaWebpack();
-      if(mod && window.__raveStore && window.__raveStore.dispatch){
-        window.__ravePopUpModule = mod;
+      if(window.__raveStore && window.__raveStore.dispatch){
+        // direct dispatch like handleSelfKick but with popUpType "Message" (string) - proven to work via manual test
         try{
-          var act = mod.Ay.actions.createPopUp({content: content, popUpType: mod.Fq.Message});
-          window.__raveStore.dispatch(act);
-          console.log('[rave] native changelog shown via popUp/Message Fq.Message='+mod.Fq.Message);
+          window.__raveStore.dispatch({type:'popUp/createPopUp', payload:{content: content, popUpType: 'Message'}});
+          console.log('[rave] native direct popUp/createPopUp Message');
           return true;
-        }catch(e1){ console.log('[rave] native via Ay failed',e1); }
-        // fallback: try guessed type strings
+        }catch(e1){ console.log('[rave] direct Message string failed', e1 && e1.message); }
         try{
-          window.__raveStore.dispatch({type:'popUp/createPopUp', payload:{content:content, popUpType: mod.Fq.Message}});
-          console.log('[rave] native via type popUp/createPopUp');
+          window.__raveStore.dispatch({type:'popUp/createPopUp', payload:{content: content, popUpType: 1}});
+          console.log('[rave] native direct popUpType 1');
           return true;
         }catch(e2){}
-        try{
-          window.__raveStore.dispatch({type:'popUp/createPopUpMessage', payload: content});
-          console.log('[rave] native via createPopUpMessage');
-          return true;
-        }catch(e3){}
+        // fallback try via webpack candidate if available
+        var cands = window.__ravePopUpCandidates || (typeof findPopUpCandidatesViaWebpack==='function' ? findPopUpCandidatesViaWebpack() : []);
+        for(var idx=0; idx<cands.length; idx++){
+          try{
+            var mod=cands[idx];
+            var act = mod.Ay.actions.createPopUp({content: content, popUpType: mod.Fq.Message});
+            window.__raveStore.dispatch(act);
+            console.log('[rave] native via candidate '+idx);
+            return true;
+          }catch(e){}
+        }
       } else {
-        console.log('[rave] native not ready mod='+!!mod+' store='+!!(window.__raveStore&&window.__raveStore.dispatch));
+        console.log('[rave] native not ready store');
       }
-    }catch(e){ console.log('[rave] native changelog failed', e); }
+    }catch(e){ console.log('[rave] native failed', e && e.message); }
     return false;
   };
 var findLoaderViaWebpack=function(){
@@ -501,39 +508,86 @@ var findLoaderViaWebpack=function(){
 })();
 
 
+
+// AUTO MAXIMIZE ON START - ENGLISH - make window fullscreen/maximized
+(function(){
+  function doMaximize(){
+    try{
+      // Try Electron IPC via various exposures
+      try{ if(window.require){ var e=window.require('electron'); if(e && e.ipcRenderer) { e.ipcRenderer.invoke('window-setMaximize', true); console.log('[rave] maximize via ipcRenderer'); return; } } }catch(e2){}
+      try{ if(window.electron && window.electron.ipcRenderer) { window.electron.ipcRenderer.invoke('window-setMaximize', true); console.log('[rave] maximize via window.electron'); return; } }catch(e2){}
+      try{ if(window.ipcRenderer) { window.ipcRenderer.invoke('window-setMaximize', true); console.log('[rave] maximize via window.ipcRenderer'); return; } }catch(e2){}
+      // Try via preload exposed API
+      try{ if(window.api && window.api.invoke) { window.api.invoke('window-setMaximize', true); } }catch(e2){}
+      // Fallback: window maximize via JS (not ideal but tries)
+      try{ window.moveTo(0,0); window.resizeTo(screen.availWidth, screen.availHeight); }catch(e2){}
+    }catch(e){}
+  }
+  // run after app loads
+  setTimeout(doMaximize, 1200);
+  setTimeout(doMaximize, 3000);
+  // also try on visibility
+  try{ document.addEventListener('visibilitychange', function(){ if(!document.hidden) doMaximize(); }); }catch(e){}
+})();
+
 // changelog toast - ENGLISH ONLY v1.8
 (function(){
   try{
-    var v="2.7-native-fix";
+    var v="2.18-maximized-blur";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
-      setTimeout(function(){
-        var d=document.createElement('div');
-        d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:#1a1a1a;border:1px solid #333;color:#fff;padding:14px 18px;border-radius:10px;font-size:13px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:sans-serif;';
-                var content = 'Rave Update '+v+String.fromCharCode(10)+String.fromCharCode(10)+ (typeof changelogText!=='undefined'?changelogText:'- All button 5x faster (0.3s) - hold All to select all'+String.fromCharCode(10)+'- Instant updates via GitHub');
-        // try native popUp/Message same as kick (handleSelfKick) - decoded via a0a/a0b
-        var nativeOk = false;
-        try{ nativeOk = showNativeChangelog(content); }catch(e){ console.log('[rave] native err',e); }
-        console.log('[rave] changelog v='+v+' nativeOk='+nativeOk);
-        // always schedule fallback check 700ms later - if native didn't show visible popup, show custom
-        setTimeout(function(){
-          var hasNative = false;
-          try{
-            var all = document.querySelectorAll('*');
-            for(var i=0;i<all.length;i++){ var el=all[i]; if(el.textContent && el.textContent.indexOf('Rave Update')!==-1 && el.offsetParent!==null && el!==d){ hasNative=true; break; } }
-          }catch(e){}
-          if(!nativeOk || !hasNative){
-            if(!document.getElementById('rave-fallback-changelog')){
-              d.id='rave-fallback-changelog';
-              d.innerHTML='<b>Rave Update '+v+'</b><br><br>'+ content.split(String.fromCharCode(10)).join('<br>') +'<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
-              d.onclick=function(){d.remove();};
-              if(!d.parentNode) document.body.appendChild(d);
-              setTimeout(function(){ if(d.parentNode) d.remove(); },9000);
-              console.log('[rave] fallback changelog shown');
-            }
-          }
-        }, 700);
-      },1800);
+      // wait until app fully loaded then show native center popup (same as kick) - stays until OK
+      var _pollAttempts=0;
+      var _pollTimer=setInterval(function(){
+        _pollAttempts++;
+        var storeReady = !!(window.__raveStore && window.__raveStore.dispatch);
+        var appLoaded = document.readyState==='complete' && document.body.children.length>1;
+        var ready = storeReady && appLoaded;
+        // also wait at least 3.5s total so splash/loader finishes
+        var minWait = _pollAttempts>=7; // 7*500 = 3500ms
+        if((ready && minWait) || _pollAttempts>30){
+          clearInterval(_pollTimer);
+          // extra 1s so UI settles
+          setTimeout(function(){
+            var content = 'Rave Update '+v+String.fromCharCode(10)+String.fromCharCode(10)+ (typeof changelogText!=='undefined'?changelogText:'- All button 5x faster (0.3s) - hold All to select all'+String.fromCharCode(10)+'- Instant updates via GitHub');
+            var nativeOk = false;
+            try{ nativeOk = showNativeChangelog(content); }catch(e){ console.log('[rave] native err',e); }
+            console.log('[rave] changelog v='+v+' nativeOk='+nativeOk+' polled '+_pollAttempts);
+            setTimeout(function(){
+              var hasNative = false;
+              try{
+                var all = document.querySelectorAll('*');
+                for(var i=0;i<all.length;i++){ var el=all[i]; if(el.textContent&&el.textContent.indexOf('Rave Update')!==-1 && el.offsetParent!==null){ hasNative=true; break; } }
+              }catch(e){}
+              if(!nativeOk || !hasNative){
+                if(document.getElementById('rave-fallback-changelog') || document.getElementById('rave-fallback-overlay')) return;
+                // overlay with blur covering whole screen like kick
+                var overlay=document.createElement('div');
+                overlay.id='rave-fallback-overlay';
+                overlay.style.cssText='position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.4);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);';
+                var d=document.createElement('div');
+                d.id='rave-fallback-changelog';
+                d.className='PopUp__popup-container__zpbry PopUp__popup-appearance__LM1tD';
+                d.style.zIndex='99999';
+                d.style.backdropFilter='blur(30px)';
+                d.style.webkitBackdropFilter='blur(30px)';
+                d.innerHTML='<div class="PopUp__popup-text__U_oit">'+ content.split(String.fromCharCode(10)).join('<br>') +'</div><div class="PopUp__popup-button__kKcZA">OK</div>';
+                var closeBoth=function(){ try{ d.remove(); }catch(e){} try{ overlay.remove(); }catch(e){} document.removeEventListener('keydown', esc); };
+                var esc=function(ev){ if(ev.key==='Escape') closeBoth(); };
+                document.addEventListener('keydown', esc);
+                setTimeout(function(){
+                  var btn=d.querySelector('.PopUp__popup-button__kKcZA');
+                  if(btn) btn.onclick=closeBoth;
+                  // do NOT close on overlay click - only OK / Escape per user request
+                },10);
+                document.body.appendChild(overlay);
+                document.body.appendChild(d);
+                console.log('[rave] fallback changelog shown (persistent until OK, with blur overlay)');
+              }
+            }, 800);
+          }, 1000);
+        }
+      }, 500);
     }
   }catch(e){}
 })();
