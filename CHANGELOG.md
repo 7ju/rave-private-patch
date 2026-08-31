@@ -1,3 +1,8 @@
+## 2.21-bandwidth-unlock-v2 (2026-08-31) - aggressive
+- Hide any Bandwidth Sharing gate/modal/overlay fixed + dimmed background
+- Force mesh grid visible (opacity 1)
+- GitHub-only via triple loader
+
 ## 2.20-bandwidth-unlock (2026-08-31) - Bandwidth Sharing fix
 - Remove enforcement when Bandwidth Sharing is OFF - no more forced re-enable to view content
 - GitHub-only update via triple CDN loader (instant via API)
