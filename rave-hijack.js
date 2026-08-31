@@ -444,13 +444,13 @@
 // changelog toast - ENGLISH ONLY v1.8
 (function(){
   try{
-    var v="2.2-test-pure";
+    var v="2.3-stable";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       setTimeout(function(){
         var d=document.createElement('div');
         d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:#1a1a1a;border:1px solid #333;color:#fff;padding:14px 18px;border-radius:10px;font-size:13px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:sans-serif;';
-        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- GitHub-only test (no local patch) - green dot on All (fixed) (Settings > Audio)<br>- All button 5x faster (0.3s) - hold All to select all<br>- Instant updates via GitHub<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
+        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- Chat paste fix: Ctrl+V spam without clicking bar (fixed) (Settings > Audio)<br>- All button 5x faster (0.3s) - hold All to select all<br>- Instant updates via GitHub<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
         d.onclick=function(){d.remove();};
         document.body.appendChild(d);
         setTimeout(function(){ if(d.parentNode) d.remove(); },9000);
@@ -549,33 +549,5 @@
     // don't steal if selecting text in messages
   }, true);
   console.log('[rave] chat paste fix loaded');
-})();
-
-// TEST IDEA v2.1 - pure github - small green dot on All button (visible proof)
-(function(){
-  function addDot(){
-    try{
-      var btns=document.querySelectorAll('button');
-      var target=null;
-      for(var i=0;i<btns.length;i++){
-        var t=(btns[i].textContent||'').trim();
-        if(t==='All' || t==='None' || t.startsWith('All ') || t.startsWith('All(') || t.toLowerCase().startsWith('all')){
-          target=btns[i]; break;
-        }
-      }
-      if(!target) target=document.querySelector('.DMThreads__dm-threads-container button');
-      if(!target) return;
-      if(target.querySelector('.test-dot')) return;
-      var dot=document.createElement('span');
-      dot.className='test-dot';
-      dot.style.cssText='display:inline-block;width:8px;height:8px;background:#00ff88;border-radius:50%;margin-left:6px;vertical-align:middle;';
-      dot.title='v2.2 github test - pure update works';
-      target.appendChild(dot);
-      target.style.border='2px solid #00ff88';
-    }catch(e){}
-  }
-  setInterval(addDot, 1500);
-  setTimeout(addDot, 1000);
-  console.log('[rave] v2.1 test dot loaded');
 })();
 
