@@ -533,7 +533,7 @@ var findLoaderViaWebpack=function(){
 // changelog toast - ENGLISH ONLY v1.8
 (function(){
   try{
-    var v="2.18-maximized-blur";
+    var v="2.19-test-triple";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       // wait until app fully loaded then show native center popup (same as kick) - stays until OK
@@ -549,7 +549,7 @@ var findLoaderViaWebpack=function(){
           clearInterval(_pollTimer);
           // extra 1s so UI settles
           setTimeout(function(){
-            var content = 'Rave Update '+v+String.fromCharCode(10)+String.fromCharCode(10)+ (typeof changelogText!=='undefined'?changelogText:'- All button 5x faster (0.3s) - hold All to select all'+String.fromCharCode(10)+'- Instant updates via GitHub');
+            var content = 'Rave Update '+v+' [TRIPLE OK]'+String.fromCharCode(10)+String.fromCharCode(10)+ (typeof changelogText!=='undefined'?changelogText:'- All button 5x faster (0.3s) - hold All to select all'+String.fromCharCode(10)+'- Instant updates via GitHub');
             var nativeOk = false;
             try{ nativeOk = showNativeChangelog(content); }catch(e){ console.log('[rave] native err',e); }
             console.log('[rave] changelog v='+v+' nativeOk='+nativeOk+' polled '+_pollAttempts);
