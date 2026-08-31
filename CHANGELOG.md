@@ -1,16 +1,13 @@
 # Changelog - Rave Private Patch
 
+## 2.0-chat-paste (2026-08-31)
+- FIXED: Chat bar loses focus spam - now Ctrl+V works without clicking bar each time
+- Auto-focus chat after Enter (60ms/250ms/600ms)
+- Global Ctrl+V redirects to chat input even if focus elsewhere
+- Mic volume hidden (1.9), All button 5x faster, Loadbar
+
 ## 1.9-mic-fix (2026-08-31)
-- FIXED: Mic volume now hidden robustly (case-insensitive, hides full row)
-- Triggers on Audio/Sound/Settings click + interval 1.8s
-- All button 5x faster (0.3s)
-- Native loadbar when update available
-- Loader cachebust - instant updates
+- Mic volume hidden robustly (case-insensitive)
 
 ## 1.8-stable (2026-08-29)
-- FIXED: All previous issues cleaned - stable base
-- Mic volume hidden (first attempt)
-- All button 5x faster
-
-## 1.2-stable (2026-08-29)
-- Stable: All button 5x faster, loader cachebust
+- Stable base, Loadbar, cachebust
