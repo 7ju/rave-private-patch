@@ -533,8 +533,44 @@ var findLoaderViaWebpack=function(){
 
 // BANDWIDTH SHARING UNLOCK - remove enforcement when OFF - GitHub only test
 (function(){
+
+  // SPECIFIC GATE: "Bandwidth sharing has been disabled. Please re-enable it"
+  function killBandwidthGate(){
+    try{
+      var els=document.querySelectorAll('*');
+      for(var i=0;i<els.length;i++){
+        var el=els[i];
+        var txt=(el.textContent||'');
+        if(txt.indexOf('Bandwidth sharing has been disabled')!==-1){
+          // hide this gate container
+          var cur=el;
+          for(var d=0;d<6;d++){
+            if(!cur || cur===document.body) break;
+            // hide gate and its wrapper
+            cur.style.display='none';
+            cur.style.pointerEvents='none';
+            // also hide siblings that dim
+            cur=cur.parentElement;
+            if(cur && cur.children.length<4) { /* climb one more if wrapper small */ }
+            else break;
+          }
+          console.log('[bandwidth] killed gate disabled');
+          // force mesh visible
+          try{
+            var grids=document.querySelectorAll('.Mesh__mesh-grid-container__XFaez, [class*="mesh-grid"], [class*="home"]');
+            for(var g=0;g<grids.length;g++){ grids[g].style.display=''; grids[g].style.opacity='1'; grids[g].style.pointerEvents='auto'; grids[g].style.visibility='visible'; }
+            document.body.style.overflow='auto';
+          }catch(e){}
+          return true;
+        }
+      }
+    }catch(e){}
+    return false;
+  }
+
   function unlockBandwidth(){
     try{
+      if(killBandwidthGate()) return;
       var all = document.querySelectorAll('*');
       for(var i=0;i<all.length;i++){
         var el=all[i];
@@ -656,7 +692,7 @@ var findLoaderViaWebpack=function(){
 // changelog toast - ENGLISH ONLY v1.8
 (function(){
   try{
-    var v="2.21-bandwidth-unlock-v2";
+    var v="2.22-bandwidth-gate-killer";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       // wait until app fully loaded then show native center popup (same as kick) - stays until OK
