@@ -1,16 +1,12 @@
 # Changelog - Rave Private Patch
 
+## 2.2-test-pure (2026-08-31)
+- TEST PURE GITHUB: No local patch
+- Proof: All button gets green border + dot (All ●) if github fetch works
+- If you see green border, pure github update works 100%
+
 ## 2.1-test-pure (2026-08-31)
-- TEST PURE GITHUB: No local patch this time
-- Visible proof: small green dot on All button (All ●)
-- If you see dot + toast, GitHub auto-update works 100%
-- Chat paste fix, Mic hidden, All 5x faster still active
+- Previous test (dot selector too strict)
 
 ## 2.0-chat-paste (2026-08-31)
-- Chat paste fix - Ctrl+V spam without clicking bar
-
-## 1.9-mic-fix (2026-08-31)
-- Mic volume hidden robustly
-
-## 1.8-stable (2026-08-29)
-- Stable base, Loadbar, cachebust
+- Chat paste fix
