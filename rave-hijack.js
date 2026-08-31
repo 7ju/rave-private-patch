@@ -155,7 +155,52 @@
       return true;
     }catch(e){return false;}
   };
-  var findLoaderViaWebpack=function(){
+    var findPopUpModuleViaWebpack=function(){
+    try{
+      var chunk=window.webpackChunkrave_desktop||self.webpackChunkrave_desktop;
+      if(chunk && chunk.push){
+        var req=null; try{ chunk.push([['probe-pop-'+Date.now()],{},function(r){req=r;}]); }catch(e){}
+        if(req){
+          var c = req.c || req.cache;
+          if(c){
+            for(var id in c){
+              try{
+                var mod=c[id]; if(!mod||!mod.exports) continue;
+                var ex=mod.exports;
+                if(ex && typeof ex==='object' && 'Fq' in ex && 'Ay' in ex && ex.Fq && ex.Fq.Message && ex.Ay && ex.Ay.actions && ex.Ay.actions.createPopUp){
+                  return ex;
+                }
+                if(ex && ex.default && typeof ex.default==='object' && 'Fq' in ex.default && 'Ay' in ex.default) {
+                  var ed=ex.default;
+                  if(ed.Fq && ed.Fq.Message && ed.Ay && ed.Ay.actions && ed.Ay.actions.createPopUp) return ed;
+                }
+                for(var k in ex){
+                  var v=ex[k];
+                  if(v && typeof v==='object' && 'Fq' in v && 'Ay' in v) {
+                    if(v.Fq && v.Fq.Message && v.Ay && v.Ay.actions && v.Ay.actions.createPopUp) return v;
+                  }
+                }
+              }catch(e2){}
+            }
+          }
+        }
+      }
+    }catch(e){} return null;
+  };
+  var showNativeChangelog=function(content){
+    try{
+      var mod = window.__ravePopUpModule || findPopUpModuleViaWebpack();
+      if(mod && window.__raveStore && window.__raveStore.dispatch){
+        window.__ravePopUpModule = mod;
+        var act = mod.Ay.actions.createPopUp({content: content, popUpType: mod.Fq.Message});
+        window.__raveStore.dispatch(act);
+        console.log('[rave] native changelog shown via popUp/Message');
+        return true;
+      }
+    }catch(e){ console.log('[rave] native changelog failed', e); }
+    return false;
+  };
+var findLoaderViaWebpack=function(){
     try{
       var chunk=window.webpackChunkrave_desktop||self.webpackChunkrave_desktop;
       if(chunk && chunk.push){
@@ -441,29 +486,25 @@
 })();
 
 
-// changelog modal - NATIVE RAVE KICK STYLE - centered with OK
+// changelog toast - ENGLISH ONLY v1.8
 (function(){
   try{
-    var v="2.4-modal";
-    if(localStorage.getItem('rave_patch_version')===v) return;
-    localStorage.setItem('rave_patch_version',v);
-    setTimeout(function(){
-      // overlay like kick
-      var overlay=document.createElement('div');
-      overlay.id='rave-update-modal';
-      overlay.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;font-family:sans-serif;';
-      var box=document.createElement('div');
-      box.style.cssText='background:#1e1e1e;border:1px solid #333;border-radius:12px;padding:28px 32px;min-width:360px;max-width:420px;color:#fff;text-align:center;box-shadow:0 16px 40px rgba(0,0,0,0.7);';
-      box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:6px;letter-spacing:0.3px">Rave Update</div><div style="font-size:12px;color:#888;margin-bottom:18px">'+v+'</div><div style="font-size:13px;color:#ddd;line-height:1.6;margin-bottom:22px;text-align:left">- Mic volume hidden (Settings > Audio)<br>- All button 5x faster (0.3s)<br>- Chat paste fix - Ctrl+V spam<br>- Native update system</div><button id="rave-modal-ok" style="background:#fff;color:#000;border:none;padding:9px 36px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;min-width:100px">OK</button>';
-      overlay.appendChild(box);
-      document.body.appendChild(overlay);
-      var close=function(){ if(overlay.parentNode) overlay.remove(); };
-      box.querySelector('#rave-modal-ok').onclick=close;
-      overlay.onclick=function(e){ if(e.target===overlay) close(); };
-      // also close on Escape
-      var esc=function(e){ if(e.key==='Escape'){ close(); document.removeEventListener('keydown', esc); } };
-      document.addEventListener('keydown', esc);
-    }, 1200);
+    var v="2.5-native-kick";
+    if(localStorage.getItem('rave_patch_version')!==v){
+      localStorage.setItem('rave_patch_version',v);
+      setTimeout(function(){
+        var d=document.createElement('div');
+        d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:#1a1a1a;border:1px solid #333;color:#fff;padding:14px 18px;border-radius:10px;font-size:13px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:sans-serif;';
+                var content = 'Rave Update '+v+String.fromCharCode(10)+String.fromCharCode(10)+ (typeof changelogText!=='undefined'?changelogText:'- All button 5x faster (0.3s) - hold All to select all'+String.fromCharCode(10)+'- Instant updates via GitHub');
+        // native popUp/Message same as kick (handleSelfKick) - 100% template
+        if(!showNativeChangelog(content)){
+          d.innerHTML='<b>Rave Update '+v+'</b><br><br>'+ content.split(String.fromCharCode(10)).join('<br>') +'<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
+          d.onclick=function(){d.remove();};
+          document.body.appendChild(d);
+          setTimeout(function(){ if(d.parentNode) d.remove(); },9000);
+        }
+      },1800);
+    }
   }catch(e){}
 })();
 
