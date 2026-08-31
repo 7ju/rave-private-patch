@@ -331,73 +331,77 @@
   console.log('[rave-native] recents hijack superfast loaded');
 })();
 
-
-// hide Mic volume option in Settings > Audio - ENGLISH ONLY - lightweight CSS fix
+// SAFE Mic volume hide - ENGLISH - ultra lightweight, no heavy observer
 (function(){
-  function hideMicVolumeUI(){
+  function hideMic(){
     try{
-      // Use CSS injection - find the container with label 'Mic-volume' and hide it
-      var sheets = document.styleSheets;
-      for(var s=0; s<sheets.length; s++){
-        var rules = sheets[s].cssRules;
-        for(var r=0; r<rules.length; r++){
-          if(rules[r].selectorText && rules[r].selectorText.includes('Mic-volume')){
-            rules[r].style.display = 'none';
-            return;
+      var labels=document.querySelectorAll('label');
+      for(var i=0;i<labels.length;i++){
+        var txt=(labels[i].textContent||'').trim();
+        if(txt==='Mic volume' || txt==='Mic-volume' || txt.toLowerCase()==='mic volume'){
+          var c=labels[i].parentElement;
+          if(c) c.style.display='none';
+          // also hide slider row if separate
+          var row=labels[i].closest('div');
+          if(row && row.parentElement) {
+            // hide the whole setting row
+            var p=row.parentElement;
+            // only if row contains slider
+            if(p.querySelector('input[type="range"]')) p.style.display='none';
           }
         }
       }
-      // fallback: inject new style
-      var style = document.createElement('style');
-      style.textContent = '.rave-native-mic-volume-hide { display: none !important; }';
-      // target the specific Mic-volume label in the settings area
-      var labels = document.querySelectorAll('label');
-      for(var i=0; i<labels.length; i++){
-        if(labels[i].textContent && labels[i].textContent.trim() === 'Mic-volume'){
-          labels[i].parentElement.style.display = 'none';
-          break;
+      // also catch by input aria-label
+      var ranges=document.querySelectorAll('input[type="range"]');
+      for(var j=0;j<ranges.length;j++){
+        var aria=ranges[j].getAttribute('aria-label')||'';
+        if(aria.toLowerCase().includes('mic')){
+          var pr=ranges[j].closest('div');
+          if(pr) pr.style.display='none';
         }
       }
-      document.head.appendChild(style);
     }catch(e){}
   }
-  // run once on load and if settings might open
-  setTimeout(hideMicVolumeUI, 500);
-  // also listen for DOM changes in case settings panel renders later
+  // run shortly after load, then every 2.5s only if Settings likely open
+  setTimeout(hideMic, 800);
+  setInterval(function(){
+    try{
+      if(document.body.textContent.includes('Mic volume')) hideMic();
+    }catch(e){}
+  }, 2500);
+  // light observer only on settings container, not whole body subtree
   try{
-    var obs = new MutationObserver(function(muts){
-      var need=false;
-      for(var i=0; i<muts.length; i++){
-        var m = muts[i];
-        if(m.addedNodes && m.addedNodes.length){
-          for(var k=0; k<m.addedNodes.length; k++){
-            var nd = m.addedNodes[k];
-            if(nd.textContent && nd.textContent.includes('Mic-volume')){
-              need = true; break;
-            }
+    var obs=new MutationObserver(function(muts){
+      for(var i=0;i<muts.length;i++){
+        var n=muts[i].addedNodes;
+        if(n && n.length){
+          for(var k=0;k<n.length;k++){
+            var nd=n[k];
+            if(nd.textContent && nd.textContent.includes('Mic volume')){ hideMic(); break; }
           }
         }
-        if(need) break;
       }
-      if(need) hideMicVolumeUI();
     });
-    obs.observe(document.body, {childList:true, subtree:true});
+    // observe body but NOT subtree heavily - only childList, and we filter
+    obs.observe(document.body,{childList:true, subtree:false});
+    setTimeout(function(){
+      var panel=document.querySelector('[class*="Settings"]')||document.querySelector('[class*="Sound"]')||document.body;
+      try{ obs.observe(panel,{childList:true, subtree:true}); }catch(e){}
+    }, 3000);
   }catch(e){}
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', hideMicVolumeUI);
-  else setTimeout(hideMicVolumeUI, 300);
-  console.log('[rave] Mic volume UI hider loaded (lightweight)');
 })();
 
-// changelog toast - ENGLISH ONLY
+
+// changelog toast - ENGLISH ONLY v1.8
 (function(){
   try{
-    var v="1.7-total-remove";
+    var v="1.8-stable";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       setTimeout(function(){
         var d=document.createElement('div');
         d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:#1a1a1a;border:1px solid #333;color:#fff;padding:14px 18px;border-radius:10px;font-size:13px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:sans-serif;';
-        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- Fixed Mic volume option hidden in Settings > Audio<br>- All button 5x faster (0.3s)<br>- Instant updates via GitHub<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
+        d.innerHTML='<b>Rave Update '+v+'</b><br><br>- Mic volume hidden (Settings > Audio)<br>- All button 5x faster (0.3s) - hold All to select all<br>- Instant updates via GitHub<br><br><span style="color:#888;font-size:11px">Click to dismiss</span>';
         d.onclick=function(){d.remove();};
         document.body.appendChild(d);
         setTimeout(function(){ if(d.parentNode) d.remove(); },9000);
@@ -405,3 +409,4 @@
     }
   }catch(e){}
 })();
+
