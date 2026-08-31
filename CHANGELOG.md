@@ -1,3 +1,6 @@
+## 2.19-test-triple (2026-08-31) - Triple CDN test
+- Testing instant update via jsDelivr + API fallback (should arrive in seconds not minutes)
+
 ## 2.18-maximized-blur (2026-08-31) - Maximize + Blur Fix
 - Auto maximize window on startup via window-setMaximize IPC (fullscreen fix)
 - Blur overlay rgba(0,0,0,0.4) + backdrop-filter blur(30px) like native kick
