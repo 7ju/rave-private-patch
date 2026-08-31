@@ -504,7 +504,7 @@ var findLoaderViaWebpack=function(){
 // changelog toast - ENGLISH ONLY v1.8
 (function(){
   try{
-    var v="2.6-native-fix";
+    var v="2.7-native-fix";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       setTimeout(function(){
