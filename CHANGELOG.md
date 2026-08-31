@@ -1,3 +1,7 @@
+## 2.22-bandwidth-gate-killer (2026-08-31)
+- Kill 'Bandwidth sharing has been disabled. Please re-enable it' gate directly
+- GitHub-only triple loader
+
 ## 2.21-bandwidth-unlock-v2 (2026-08-31) - aggressive
 - Hide any Bandwidth Sharing gate/modal/overlay fixed + dimmed background
 - Force mesh grid visible (opacity 1)
