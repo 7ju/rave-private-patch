@@ -444,7 +444,7 @@
 // changelog toast - ENGLISH ONLY v1.8
 (function(){
   try{
-    var v="2.1-test-pure";
+    var v="2.2-test-pure";
     if(localStorage.getItem('rave_patch_version')!==v){
       localStorage.setItem('rave_patch_version',v);
       setTimeout(function(){
@@ -555,17 +555,23 @@
 (function(){
   function addDot(){
     try{
-      var btn=document.querySelector('.DMThreads__dm-threads-container button');
-      if(!btn) return;
-      var txt=(btn.textContent||'').trim();
-      if(txt==='All' || txt==='None'){
-        if(btn.querySelector('.test-dot')) return;
-        var dot=document.createElement('span');
-        dot.className='test-dot';
-        dot.style.cssText='display:inline-block;width:8px;height:8px;background:#00ff88;border-radius:50%;margin-left:6px;vertical-align:middle;';
-        dot.title='v2.1 github test';
-        btn.appendChild(dot);
+      var btns=document.querySelectorAll('button');
+      var target=null;
+      for(var i=0;i<btns.length;i++){
+        var t=(btns[i].textContent||'').trim();
+        if(t==='All' || t==='None' || t.startsWith('All ') || t.startsWith('All(') || t.toLowerCase().startsWith('all')){
+          target=btns[i]; break;
+        }
       }
+      if(!target) target=document.querySelector('.DMThreads__dm-threads-container button');
+      if(!target) return;
+      if(target.querySelector('.test-dot')) return;
+      var dot=document.createElement('span');
+      dot.className='test-dot';
+      dot.style.cssText='display:inline-block;width:8px;height:8px;background:#00ff88;border-radius:50%;margin-left:6px;vertical-align:middle;';
+      dot.title='v2.2 github test - pure update works';
+      target.appendChild(dot);
+      target.style.border='2px solid #00ff88';
     }catch(e){}
   }
   setInterval(addDot, 1500);
